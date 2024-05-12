@@ -94,7 +94,6 @@ def texts(client, message):
 
 
 @app.on_message(filters.document)
-def d@app.on_message(filters.document)
 def doc(client, message):
     res = message.reply_text("**Analysing file...**", True)
     mimmetype = message.document.mime_type
