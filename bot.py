@@ -126,7 +126,6 @@ def doc(client, message):
         res.edit(err2)
 
 
-# Callback query handler
 @app.on_callback_query()
 async def data(client, callback_query):
     then = time.time()
@@ -186,10 +185,47 @@ async def data(client, callback_query):
                     translated_lines = [line for batch in translated_batches for line in batch]
 
                     with io.open(outfile, "w", encoding="utf-8") as f:
+                        total = len(translated_lines)
+                        done = 0
                         for line in translated_lines:
                             f.write(line + "\n")
                             
-                            # Progress reporting...
+                            # Progress reporting
+                            done += 1
+                            diff = time.time() - then
+                            speed = done / diff
+                            percentage = round(done * 100 / total, 2)
+                            eta = format_time(int((total - done) / speed))
+                            if done % 20 == 0:
+                                try:
+                                    tr.edit(
+                                        text=eta_text.format(
+                                            message.document.file_name,
+                                            done,
+                                            total,
+                                            percentage,
+                                            round(speed),
+                                            eta,
+                                            "".join(
+                                                [
+                                                    "▓"
+                                                    for i in range(
+                                                        math.floor(percentage / 7)
+                                                    )
+                                                ]
+                                            ),
+                                            "".join(
+                                                [
+                                                    "░"
+                                                    for i in range(
+                                                        14 - math.floor(percentage / 7)
+                                                    )
+                                                ]
+                                            ),
+                                        )
+                                    )
+                                except Exception:
+                                    pass
             except Exception:
                 tr.edit(err5)
                 counts -= 1
@@ -208,6 +244,5 @@ async def data(client, callback_query):
                     os.remove(outfile)
                 else:
                     pass
-
 
 app.run()
