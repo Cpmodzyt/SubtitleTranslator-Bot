@@ -125,6 +125,11 @@ def doc(client, message):
     else:
         res.edit(err2)
 
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
 @app.on_callback_query()
 async def data(client, callback_query):
     then = time.time()
@@ -223,16 +228,17 @@ async def data(client, callback_query):
                                             ),
                                         )
                                     )
-                                except Exception:
-                                    pass
-            except Exception:
+                                except Exception as e:
+                                    logging.error(f"Error editing message: {e}")
+            except Exception as e:
+                logging.error(f"Error translating subtitle: {e}")
                 await tr.edit(err5)  # Await edit coroutine
                 counts -= 1
                 update(message.chat.id, counts, "free")
                 process_failed = True
             if process_failed is not True:
                 await tr.delete()  # Await delete coroutine
-                if os.path.exists(outfile):
+                if os.path.exists(outfile) and os.path.getsize(outfile) > 0:  # Check file size
                     await message.reply_document(
                         document=outfile, thumb="logo.jpg", quote=True, caption=caption  # Await reply_document coroutine
                     )
@@ -242,6 +248,7 @@ async def data(client, callback_query):
                     os.remove(subdir)
                     os.remove(outfile)
                 else:
+                    logging.error("Translated file is empty or does not exist")
                     pass
 
 app.run()
