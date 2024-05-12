@@ -94,6 +94,7 @@ def texts(client, message):
 
 
 @app.on_message(filters.document)
+def d@app.on_message(filters.document)
 def doc(client, message):
     res = message.reply_text("**Analysing file...**", True)
     mimmetype = message.document.mime_type
@@ -101,18 +102,12 @@ def doc(client, message):
         dts = dt(message.chat.id)
         if not today_date == dts:
             update(message.chat.id, 0, "free")
-        status_bot = check(message.chat.id)
         counts = count(message.chat.id)
-        if status_bot is None:
-            update(message.chat.id, 0, "free")
-        elif status_bot == "free":
-            update(message.chat.id, counts, "waiting")
-            res.edit(
-                text="choose the destination language",
-                reply_markup=InlineKeyboardMarkup(langs),
-            )
-        else:
-            res.edit(err1)
+        update(message.chat.id, counts, "waiting")
+        res.edit(
+            text="choose the destination language",
+            reply_markup=InlineKeyboardMarkup(langs),
+        )
     else:
         res.edit(err2)
 
