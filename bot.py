@@ -125,13 +125,12 @@ def doc(client, message):
     else:
         res.edit(err2)
 
-
 @app.on_callback_query()
 async def data(client, callback_query):
     then = time.time()
     rslt = callback_query.data
     if rslt == "about":
-        callback_query.message.edit(
+        await callback_query.message.edit(
             text=about,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -139,9 +138,9 @@ async def data(client, callback_query):
             ),
         )
     elif rslt == "close":
-        callback_query.message.delete()
+        await callback_query.message.delete()
     elif rslt == "help":
-        callback_query.message.edit(
+        await callback_query.message.edit(
             text=help_text,
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("close", callback_data="close")]]
@@ -155,17 +154,17 @@ async def data(client, callback_query):
         if not os.path.isdir(location):
             os.makedirs(location)
         file_path = location + "/" + message.document.file_name
-        subdir = client.download_media(message=message, file_name=file_path)
+        subdir = await client.download_media(message=message, file_name=file_path)  # Await download_media coroutine
         translator = Translator()
         outfile = f"{subdir.replace('.srt', '')}_{lang}.srt"
-        msg.delete()
+        await msg.delete()  # Await delete coroutine
         counts = count(message.chat.id)
         if counts > 10:
-            message.reply_text(err3)
+            await message.reply_text(err3)  # Await reply_text coroutine
             os.remove(subdir)
             update(message.chat.id, counts, "free")
         else:
-            tr = message.reply_text(f"Translating to {lang}", True)
+            tr = await message.reply_text(f"Translating to {lang}", True)  # Await reply_text coroutine
             counts += 1
             update(message.chat.id, counts, "waiting")
             process_failed = False
@@ -198,7 +197,7 @@ async def data(client, callback_query):
                             eta = format_time(int((total - done) / speed))
                             if done % 20 == 0:
                                 try:
-                                    tr.edit(
+                                    await tr.edit(
                                         text=eta_text.format(
                                             message.document.file_name,
                                             done,
@@ -227,15 +226,15 @@ async def data(client, callback_query):
                                 except Exception:
                                     pass
             except Exception:
-                tr.edit(err5)
+                await tr.edit(err5)  # Await edit coroutine
                 counts -= 1
                 update(message.chat.id, counts, "free")
                 process_failed = True
             if process_failed is not True:
-                tr.delete()
+                await tr.delete()  # Await delete coroutine
                 if os.path.exists(outfile):
-                    message.reply_document(
-                        document=outfile, thumb="logo.jpg", quote=True, caption=caption
+                    await message.reply_document(
+                        document=outfile, thumb="logo.jpg", quote=True, caption=caption  # Await reply_document coroutine
                     )
                     update(message.chat.id, counts, "free")
                     insertlog()
