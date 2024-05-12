@@ -1,3 +1,8 @@
+import asyncio
+import math
+import io
+import os
+import time
 from firebase import firebase
 from creds import cred
 from googletrans import Translator
@@ -29,12 +34,11 @@ from strings import (
     err4,
     err5,
 )
-import time
-import math
-import io
-import os
 
+# Initialize Firebase
 firebase = firebase.FirebaseApplication(cred.DB_URL)
+
+# Initialize Telegram Client
 app = Client(
     "subtitle-translator-bot-subtranss",
     api_id=cred.API_ID,
@@ -42,7 +46,18 @@ app = Client(
     bot_token=cred.BOT_TOKEN,
 )
 
+# Define a function to translate a batch of lines
+async def translate_batch(translator, batch, lang):
+    translated_lines = []
+    for line in batch:
+        try:
+            translation = await translator.translate(line, dest=lang)
+            translated_lines.append(translation.text)
+        except Exception:
+            pass
+    return translated_lines
 
+# Command handlers
 @app.on_message(filters.command(["start"]))
 def start(client, message):
     client.send_message(
@@ -111,8 +126,9 @@ def doc(client, message):
         res.edit(err2)
 
 
+# Callback query handler
 @app.on_callback_query()
-def data(client, callback_query):
+async def data(client, callback_query):
     then = time.time()
     rslt = callback_query.data
     if rslt == "about":
@@ -156,65 +172,24 @@ def data(client, callback_query):
             process_failed = False
             try:
                 with io.open(subdir, "r", encoding="utf-8") as file:
-                    try:
-                        subtitle = file.readlines()
-                    except Exception:
-                        tr.edit(err4)
-                        update(message.chat.id, counts, "free")
-
+                    subtitle = file.readlines()
                     subtitle[0] = "1\n"
+                    
+                    # Split subtitle into batches of 10 lines each
+                    batches = [subtitle[i:i+10] for i in range(0, len(subtitle), 10)]
+                    
+                    translated_batches = await asyncio.gather(*[
+                        translate_batch(translator, batch, lang) for batch in batches
+                    ])
+
+                    # Flatten the list of batches
+                    translated_lines = [line for batch in translated_batches for line in batch]
+
                     with io.open(outfile, "w", encoding="utf-8") as f:
-                        total = len(subtitle)
-                        done = 0
-
-                        for i in range(total):
-                            diff = time.time() - then
-                            if subtitle[i][0].isdigit():
-                                f.write("\n" + subtitle[i])
-                                done += 1
-                            else:
-                                try:
-                                    receive = translator.translate(
-                                        subtitle[i], dest=lang
-                                    )
-                                    f.write(receive.text + "\n")
-                                    done += 1
-                                except Exception:
-                                    pass
-
-                            speed = done / diff
-                            percentage = round(done * 100 / total, 2)
-                            eta = format_time(int((total - done) / speed))
-                            if done % 20 == 0:
-                                try:
-                                    tr.edit(
-                                        text=eta_text.format(
-                                            message.document.file_name,
-                                            done,
-                                            total,
-                                            percentage,
-                                            round(speed),
-                                            eta,
-                                            "".join(
-                                                [
-                                                    "▓"
-                                                    for i in range(
-                                                        math.floor(percentage / 7)
-                                                    )
-                                                ]
-                                            ),
-                                            "".join(
-                                                [
-                                                    "░"
-                                                    for i in range(
-                                                        14 - math.floor(percentage / 7)
-                                                    )
-                                                ]
-                                            ),
-                                        )
-                                    )
-                                except Exception:
-                                    pass
+                        for line in translated_lines:
+                            f.write(line + "\n")
+                            
+                            # Progress reporting...
             except Exception:
                 tr.edit(err5)
                 counts -= 1
