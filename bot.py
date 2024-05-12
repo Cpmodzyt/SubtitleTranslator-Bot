@@ -128,7 +128,8 @@ def doc(client, message):
 import logging
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+import logging
+logging.basicConfig(level=logging.INFO)
 
 @app.on_callback_query()
 async def data(client, callback_query):
