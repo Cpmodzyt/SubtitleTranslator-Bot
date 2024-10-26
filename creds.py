@@ -5,8 +5,8 @@ load_dotenv(find_dotenv())
 
 
 class cred():
-    BOT_TOKEN = "6916875347:AAEVxR4cO_sIBB6V57ANA92pHKxzw9G3yX0"
-    API_ID = "10471716"       
-    API_HASH = "f8a1b21a13af154596e2ff5bed164860"   
-    DB_URL = "https://telegram-bot-51cbb-default-rtdb.firebaseio.com/" 
-    BOT_NAME = "ioTester"     
+    BOT_TOKEN = "7820025967:AAGeYjX4wno2aFfTE9w6VHm6Ur6VFWa_2ns"
+    API_ID = "25812247"       
+    API_HASH = "00a50dc03d5b63a0eabfca83fa02c4ca"   
+    DB_URL = "https://animetgbot-default-rtdb.firebaseio.com" 
+    BOT_NAME = "testanimeflix"     
